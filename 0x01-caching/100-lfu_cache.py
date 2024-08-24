@@ -17,7 +17,7 @@ class LFUCache(BaseCaching):
         if key or item is not None:
             cache_value = self.get(key)
             if cache_value is None:
-                if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
+                if len(self.cache_data) > BaseCaching.MAX_ITEMS:
                     keydel = self.leastrecent
                     lendel = len(keydel) - 1
                     del self.cache_data[keydel[lendel]]

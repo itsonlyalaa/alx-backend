@@ -2,49 +2,52 @@
 """LFU Caching"""
 
 from base_caching import BaseCaching
-from collections import OrderedDict
 
 
 class LFUCache(BaseCaching):
-    """A Class that inherits from BaseCaching"""
+    """A LRUCache class that define a LRU algorithm to use cache"""
+
     def __init__(self):
+        """Initiliazation"""
         super().__init__()
-        self.lru_cache = OrderedDict()
-        self.lfu_cache = {}
+        self.leastrecent = []
 
     def put(self, key, item):
-        """ Assign to the dictionary, LFU algorithm """
-        if key in self.lru_cache:
-            del self.lru_cache[key]
-        if len(self.lru_cache) > BaseCaching.MAX_ITEMS - 1:
-            min_value = min(self.lfu_cache.values())
-            lfu_keys = [k for k, v in self.lfu_cache.items() if v == min_value]
-            if len(lfu_keys) == 1:
-                print("DISCARD:", lfu_keys[0])
-                self.lru_cache.pop(lfu_keys[0])
-                del self.lfu_cache[lfu_keys[0]]
+        """modify cache data"""
+        if key or item is not None:
+            cache_value = self.get(key)
+            if cache_value is None:
+                if len(self.cache_data) >= BaseCaching.MAX_ITEMS:
+                    keydel = self.leastrecent
+                    lendel = len(keydel) - 1
+                    del self.cache_data[keydel[lendel]]
+                    print("DISCARD: {}".format(self.leastrecent.pop()))
             else:
-                for k, _ in list(self.lru_cache.items()):
-                    if k in lfu_keys:
-                        print("DISCARD:", k)
-                        self.lru_cache.pop(k)
-                        del self.lfu_cache[k]
-                        break
-        self.lru_cache[key] = item
-        self.lru_cache.move_to_end(key)
-        if key in self.lfu_cache:
-            self.lfu_cache[key] += 1
-        else:
-            self.lfu_cache[key] = 1
-        self.cache_data = dict(self.lru_cache)
+                del self.cache_data[key]
+
+            if key in self.leastrecent:
+                indextodel = self.search_first(self.leastrecent, key)
+                self.leastrecent.pop(indextodel)
+                self.leastrecent.insert(0, key)
+            else:
+                self.leastrecent.insert(0, key)
+
+            self.cache_data[key] = item
 
     def get(self, key):
-        """ Return value"""
-        if key in self.lru_cache:
-            cache_value = self.lru_cache[key]
-            self.lru_cache.move_to_end(key)
-            if key in self.lfu_cache:
-                self.lfu_cache[key] += 1
-            else:
-                self.lfu_cache[key] = 1
-            return cache_value
+        """Return value"""
+        cache_value = self.cache_data.get(key)
+
+        if cache_value:
+            indextodel = self.search_first(self.leastrecent, key)
+            self.leastrecent.pop(indextodel)
+            self.leastrecent.insert(0, key)
+
+        return cache_value
+
+    @staticmethod
+    def search_first(mrulist, key):
+        for i in range(0, len(mrulist)):
+            if mrulist[i] == key:
+                return (i)
+        return None

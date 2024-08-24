@@ -24,4 +24,4 @@ class LIFOCache(BaseCaching):
             return None
         if key in self.cache_data:
             cache_value = self.cache_data[key]
-            return cache_valuevalue
+            return cache_value
